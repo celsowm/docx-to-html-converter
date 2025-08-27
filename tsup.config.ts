@@ -1,11 +1,12 @@
 import { defineConfig } from "tsup";
 
 /**
- * 1) Build para npm (esm + cjs): deixa jszip e fast-xml-parser como externos/peers.
- * 2) Build IIFE “standalone” para CDN: embute as dependências num único arquivo.
+ * Dois builds:
+ * 1) npm (esm + cjs) sem embutir deps (jszip, fast-xml-parser ficam como peers)
+ * 2) CDN (iife) embutindo tudo (um arquivo só) e expondo a classe direta no window
  */
 export default defineConfig([
-  // npm (esm + cjs) — SEM bundle das deps
+  // --- Build para npm (ESM + CJS) ---
   {
     entry: { index: "src/index.js" },
     format: ["esm", "cjs"],
@@ -17,16 +18,36 @@ export default defineConfig([
     external: ["jszip", "fast-xml-parser"],
   },
 
-  // CDN IIFE — COM bundle das deps (um arquivo só)
+  // --- Build para CDN (IIFE standalone) ---
   {
-    entry: { "index.iife": "src/index.js" },
+    entry: { index: "src/index.js" },
     format: ["iife"],
-    globalName: "DocxToHtmlConverter",
+    globalName: "DocxToHtmlConverter", // window.DocxToHtmlConverter
     sourcemap: true,
     minify: true,
     clean: false,
     target: "es2019",
-    // força embutir deps:
     noExternal: ["jszip", "fast-xml-parser"],
+
+    // força o nome do arquivo ser index.iife.js
+    outExtension({ format }) {
+      return { js: format === "iife" ? ".iife.js" : ".js" };
+    },
+
+    // shim: se por algum motivo vier {default: ...}, mapeia para a classe direta
+    footer: {
+      iife: `
+        (function(g){
+          var m = g.DocxToHtmlConverter;
+          if (m && m.default) { g.DocxToHtmlConverter = m.default; }
+        })(typeof window !== 'undefined' ? window : globalThis);
+      `
+    },
+
+    // evita tratar default import de peers como namespace
+    esbuildOptions(options) {
+      // não externalizar ESM automaticamente (mantém shape do default)
+      options.esmExternals = false;
+    },
   },
 ]);

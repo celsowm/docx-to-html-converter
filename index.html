@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <title>DOCX → HTML (teste rápido)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        :root {
+            --gap: 12px;
+            --bg: #0b0f14;
+            --fg: #eaeef3;
+            --muted: #9aa4b2;
+            --accent: #57a6ff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: var(--bg);
+            color: var(--fg);
+            font: 14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--gap);
+            height: 100vh;
+            padding: var(--gap);
+        }
+
+        .panel {
+            border: 1px solid #1b2735;
+            border-radius: 10px;
+            background: #0f1520;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .panel header {
+            padding: 10px 12px;
+            border-bottom: 1px solid #1b2735;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel header h2 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .left .drop {
+            flex: 1;
+            margin: var(--gap);
+            border: 2px dashed #2a3a4e;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 24px;
+            color: var(--muted);
+            transition: border-color .2s, background .2s, color .2s;
+            user-select: none;
+        }
+
+        .left .drop.dragover {
+            border-color: var(--accent);
+            background: #0e243d;
+            color: #bcd9ff;
+        }
+
+        .controls {
+            padding: 0 var(--gap) var(--gap) var(--gap);
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .controls input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            background: #19324d;
+            color: #e8f2ff;
+            border: 1px solid #1e3d5e;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #1c3958;
+        }
+
+        .checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--muted);
+        }
+
+        .log {
+            border-top: 1px dashed #213044;
+            padding: 8px 12px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+            max-height: 30vh;
+            overflow: auto;
+            white-space: pre-wrap;
+        }
+
+        .right .canvas {
+            flex: 1;
+            background: #fff;
+            color: #000;
+            overflow: auto;
+            margin: var(--gap);
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            padding: 16px;
+        }
+
+        .right header .actions {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 12px;
+            margin-left: 4px;
+        }
+
+        @media (max-width: 960px) {
+            .split {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .right .canvas {
+                min-height: 50vh;
+            }
+        }
+    </style>
+
+    <script src="./dist/index.iife.global.js"></script>
+
+
+</head>
+
+<body>
+    <div class="split">
+        <section class="panel left">
+            <header>
+                <h2>Entrada (.docx)</h2>
+                <span class="hint">Arraste e solte ou selecione um arquivo</span>
+            </header>
+
+            <div id="drop" class="drop">
+                <div>
+                    <div style="font-size: 15px; margin-bottom: 6px;">Arraste seu <b>.docx</b> aqui</div>
+                    <div class="hint">ou clique em “Escolher arquivo”</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <label class="btn" for="fileInput">Escolher arquivo</label>
+                <input id="fileInput" type="file" accept=".docx" />
+                <label class="checkbox">
+                    <input id="extractPageStyles" type="checkbox" checked />
+                    extrair @page (margens/tamanho)
+                </label>
+                <button id="btnClear" class="btn" type="button">Limpar</button>
+            </div>
+
+            <div id="log" class="log" aria-live="polite"></div>
+        </section>
+
+        <section class="panel right">
+            <header>
+                <h2>Saída (HTML)</h2>
+                <div class="actions">
+                    <button id="btnDownloadHtml" class="btn" type="button">Baixar HTML</button>
+                    <button id="btnCopyHtml" class="btn" type="button">Copiar HTML</button>
+                </div>
+            </header>
+            <div id="canvas" class="canvas">
+                <div style="color:#374151">O HTML renderizado aparecerá aqui.</div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // helpers UI
+        const $ = (s) => document.querySelector(s);
+        const drop = $('#drop');
+        const fileInput = $('#fileInput');
+        const logEl = $('#log');
+        const canvas = $('#canvas');
+        const chkPage = $('#extractPageStyles');
+
+        let lastHtml = "";
+        let lastCss = "";
+
+        function log(msg, isErr = false) {
+            const time = new Date().toLocaleTimeString();
+            logEl.textContent += `[${time}] ${isErr ? 'ERROR: ' : ''}${msg}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function setDragState(on) {
+            drop.classList.toggle('dragover', !!on);
+        }
+
+        drop.addEventListener('dragover', e => { e.preventDefault(); setDragState(true); });
+        drop.addEventListener('dragleave', e => { setDragState(false); });
+        drop.addEventListener('drop', async (e) => {
+            e.preventDefault(); setDragState(false);
+            if (!e.dataTransfer.files?.length) return;
+            handleFile(e.dataTransfer.files[0]);
+        });
+
+        fileInput.addEventListener('change', () => {
+            const f = fileInput.files?.[0];
+            if (f) handleFile(f);
+        });
+
+        $('#btnClear').addEventListener('click', () => {
+            lastHtml = ""; lastCss = "";
+            canvas.innerHTML = `<div style="color:#374151">O HTML renderizado aparecerá aqui.</div>`;
+            logEl.textContent = "";
+        });
+
+        $('#btnCopyHtml').addEventListener('click', async () => {
+            if (!lastHtml) return;
+            try {
+                await navigator.clipboard.writeText(lastHtml);
+                log('HTML copiado para a área de transferência.');
+            } catch (err) {
+                log('Falha ao copiar HTML: ' + err.message, true);
+            }
+        });
+
+        $('#btnDownloadHtml').addEventListener('click', () => {
+            if (!lastHtml) return;
+            const blob = new Blob([lastCss ? `<style>${lastCss}</style>\n` : '', lastHtml], { type: "text/html;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'docx-convertido.html';
+            document.body.appendChild(a); a.click();
+            setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
+        });
+
+        async function handleFile(file) {
+            if (!file || !file.name.toLowerCase().endsWith('.docx')) {
+                log('Selecione um arquivo .docx válido.', true);
+                return;
+            }
+            log(`Lendo arquivo: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+
+            try {
+                const buf = await file.arrayBuffer();
+
+                // Se você publicou sua lib com nome "docx-to-html-converter",
+                // o IIFE expõe window.DocxToHtmlConverter.
+                if (!window.DocxToHtmlConverter) {
+                    log('DocxToHtmlConverter não encontrado. Confirme o <script> dist/index.iife.js.', true);
+                    return;
+                }
+
+                // Caso queira usar ParserClass explícita, passe fxparser.XMLParser como 2º arg.
+                const conv = await DocxToHtmlConverter.create(buf /*, fxparser.XMLParser */);
+                const { html, pageStylesCss } = await conv.convert({
+                    extractPageStyles: chkPage.checked
+                });
+
+                // injeta @page no <head> (para impressão ou CSS global)
+                if (pageStylesCss) {
+                    let styleEl = document.getElementById('docx-page-style');
+                    if (!styleEl) {
+                        styleEl = document.createElement('style');
+                        styleEl.id = 'docx-page-style';
+                        document.head.appendChild(styleEl);
+                    }
+                    styleEl.textContent = pageStylesCss;
+                }
+
+                // mostra na metade direita
+                canvas.innerHTML = html;
+
+                // guarda para download/copy
+                lastHtml = html;
+                lastCss = pageStylesCss || "";
+
+                log('Conversão concluída ✅');
+            } catch (err) {
+                console.error(err);
+                log('Falha na conversão: ' + (err?.message || err), true);
+            }
+        }
+    </script>
+</body>
+
+</html>

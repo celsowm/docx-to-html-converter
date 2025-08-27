@@ -1,1 +1,3 @@
-export { default } from "./DocxToHtmlConverter.js";
+import DocxToHtmlConverter from "./DocxToHtmlConverter.js";
+export default DocxToHtmlConverter;
+export { DocxToHtmlConverter };
