@@ -1,0 +1,48 @@
+{
+  "name": "docx-to-html-converter",
+  "version": "1.0.0",
+  "description": "Converte DOCX para HTML no navegador. Usa jszip e fast-xml-parser internamente, com override opcional do ParserClass.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "unpkg": "dist/index.iife.js",
+  "jsdelivr": "dist/index.iife.js",
+  "files": [
+    "dist",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.6.0"
+  },
+  "peerDependencies": {
+    "fast-xml-parser": ">=4",
+    "jszip": ">=3"
+  },
+  "dependencies": {},
+  "keywords": ["docx","html","converter","browser","fast-xml-parser","jszip"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seuuser/docx-to-html-converter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/seuuser/docx-to-html-converter/issues"
+  },
+  "homepage": "https://github.com/seuuser/docx-to-html-converter#readme"
+}
