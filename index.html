@@ -156,7 +156,7 @@
         }
     </style>
 
-    <script src="./dist/index.iife.global.js"></script>
+    <script src="./dist/index.iife.js"></script>
 
 
 </head>
@@ -265,29 +265,30 @@
         });
 
         async function handleFile(file) {
-            if (!file || !file.name.toLowerCase().endsWith('.docx')) {
+            if (!file || !file.name?.toLowerCase().endsWith('.docx')) {
                 log('Selecione um arquivo .docx válido.', true);
                 return;
             }
+
             log(`Lendo arquivo: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
 
             try {
                 const buf = await file.arrayBuffer();
 
-                // Se você publicou sua lib com nome "docx-to-html-converter",
-                // o IIFE expõe window.DocxToHtmlConverter.
-                if (!window.DocxToHtmlConverter) {
-                    log('DocxToHtmlConverter não encontrado. Confirme o <script> dist/index.iife.js.', true);
+                // A classe está em window.DocxToHtmlConverter (global do IIFE)
+                if (!window.DocxToHtmlConverter || typeof window.DocxToHtmlConverter.create !== 'function') {
+                    log('DocxToHtmlConverter não encontrado. Confirme o <script> para dist/index.iife.js.', true);
                     return;
                 }
 
-                // Caso queira usar ParserClass explícita, passe fxparser.XMLParser como 2º arg.
-                const conv = await DocxToHtmlConverter.create(buf /*, fxparser.XMLParser */);
+                // No IIFE standalone não precisa passar ParserClass
+                const conv = await window.DocxToHtmlConverter.create(buf);
+
                 const { html, pageStylesCss } = await conv.convert({
                     extractPageStyles: chkPage.checked
                 });
 
-                // injeta @page no <head> (para impressão ou CSS global)
+                // injeta @page no <head> (opcional, útil p/ impressão)
                 if (pageStylesCss) {
                     let styleEl = document.getElementById('docx-page-style');
                     if (!styleEl) {
@@ -298,10 +299,10 @@
                     styleEl.textContent = pageStylesCss;
                 }
 
-                // mostra na metade direita
+                // renderiza na metade direita
                 canvas.innerHTML = html;
 
-                // guarda para download/copy
+                // guarda para copiar/baixar
                 lastHtml = html;
                 lastCss = pageStylesCss || "";
 
