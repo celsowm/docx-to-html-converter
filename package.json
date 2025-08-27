@@ -1,6 +1,6 @@
 {
   "name": "docx-to-html-converter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Converte DOCX para HTML no navegador. Usa jszip e fast-xml-parser internamente, com override opcional do ParserClass.",
   "license": "MIT",
   "type": "module",
@@ -36,7 +36,14 @@
     "jszip": ">=3"
   },
   "dependencies": {},
-  "keywords": ["docx","html","converter","browser","fast-xml-parser","jszip"],
+  "keywords": [
+    "docx",
+    "html",
+    "converter",
+    "browser",
+    "fast-xml-parser",
+    "jszip"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/seuuser/docx-to-html-converter.git"
