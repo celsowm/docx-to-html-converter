@@ -1,14 +1,12 @@
 {
   "name": "docx-to-html-converter",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Converte DOCX para HTML no navegador. Usa jszip e fast-xml-parser internamente, com override opcional do ParserClass.",
   "license": "MIT",
   "type": "module",
-
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "index.d.ts",
-
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
@@ -17,36 +15,29 @@
       "default": "./dist/index.mjs"
     }
   },
-
   "unpkg": "dist/index.iife.js",
   "jsdelivr": "dist/index.iife.js",
-
   "files": [
     "dist",
     "index.d.ts",
     "README.md",
     "LICENSE"
   ],
-
   "sideEffects": false,
-
   "scripts": {
     "build": "tsup",
     "clean": "rimraf dist",
     "prepublishOnly": "npm run clean && npm run build"
   },
-
   "devDependencies": {
     "rimraf": "^6.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.6.0"
   },
-
   "peerDependencies": {
     "fast-xml-parser": ">=4",
     "jszip": ">=3"
   },
-
   "keywords": [
     "docx",
     "html",
@@ -55,7 +46,6 @@
     "fast-xml-parser",
     "jszip"
   ],
-
   "repository": {
     "type": "git",
     "url": "git+https://github.com/celsowm/docx-to-html-converter.git"
@@ -64,7 +54,6 @@
     "url": "https://github.com/celsowm/docx-to-html-converter/issues"
   },
   "homepage": "https://github.com/celsowm/docx-to-html-converter#readme",
-
   "publishConfig": {
     "access": "public"
   }
