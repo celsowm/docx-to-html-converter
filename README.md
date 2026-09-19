@@ -1,5 +1,7 @@
 # DOCX to HTML Converter
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/L4L11VB7JN)
+
 Convert `.docx` (Microsoft Word) documents directly to **HTML** in the browser.  
 Built on top of [JSZip](https://stuk.github.io/jszip/) and [fast-xml-parser](https://github.com/NaturalIntelligence/fast-xml-parser), bundled as a standalone library or installable via npm.
 
